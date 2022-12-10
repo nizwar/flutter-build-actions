@@ -1,10 +1,10 @@
 name: Build Flutter APKs & Appbundle
-on: [workflow_dispatch]
+on: push
 
 jobs:
   # Build APKs
   build_apks:
-    name: Build DEV APK
+    name: Build APKs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -25,7 +25,7 @@ jobs:
         with:
           channel: 'stable'     
 
-      - name: Build APKs (Split by ABI)
+      - name: Building APKs (Split by ABI)
         run: flutter build apk --release --split-per-abi
  
       - name: Release the APKs
@@ -33,9 +33,9 @@ jobs:
         with:
           artifacts: "build/app/outputs/flutter-apk/*.apk"
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: v${{ steps.project_version.outputs.version_number }}
-          name: "Built Apks ${{ steps.project_version.outputs.version_number }}"
-          body: "Built apks of this project, can be use to test the application"
+          tag: v${{ steps.project_version.outputs.version_number }}-${{github.run_number}}-apks
+          name: "Built Apks ${{ steps.project_version.outputs.version_number }} Build(${{github.run_number}})"
+
 
   # Build Appbundle
   build_appbundle:
@@ -60,14 +60,13 @@ jobs:
         with:
           channel: 'stable'    
 
-      - name: Build Appbundle
+      - name: Building Appbundle
         run: flutter build appbundle
 
       - name: Release Appbundle
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/app/outputs/bundle/*.aab"
+          artifacts: "build/app/outputs/bundle/release/*.aab"
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: v${{ steps.project_version.outputs.version_number }}-appbundle
-          name: "Built Appbundle ${{ steps.project_version.outputs.version_number }}"
-          body: "Built Appbundle, can be use to upload the application to playstore"
+          tag: v${{ steps.project_version.outputs.version_number }}-${{github.run_number}}-appbundle
+          name: "Built Appbundle ${{ steps.project_version.outputs.version_number }} Build(${{github.run_number}})"
