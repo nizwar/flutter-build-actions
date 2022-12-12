@@ -47,8 +47,22 @@ The workflow will run the following steps:
 7. Upload APK & AAB as Github Release
 8. Deploy Documentation to Github Pages 
 
+
+## Notes
 To see the progress of the workflow, go to the Actions tab in your repository.
 
 The process will take about 10 minutes to complete (depends how big your project is). Once the build is complete, you will receive an email and you can download the APK's and AAB files from the release page.
 
 If you want to manually trigger the workflow, simply change "push" to "workflow_dispatch" (LINE 2), and then trigger it by clicking the "Run workflow" button in the Actions tab.
+
+
+# Example Project
+Here is an example project that uses this workflow: [Flutter Build Actions Example](https://github.com/nizwar/flutter-build-actions-built-example).
+
+See the release page to download the APK and AAB files: [Release Page](https://github.com/nizwar/flutter-build-actions-built-example/releases/)
+
+See the Github Pages to see the documentation: [Github Pages](https://nizwar.github.io/flutter-build-actions-built-example/)
+
+## Support me 
+If you like this project, please give it a star and share it with your friends. You can also support me by buying me a coffee with [PayPal](https://paypal.me/nizwar)
+
