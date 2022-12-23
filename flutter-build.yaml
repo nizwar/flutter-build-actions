@@ -31,8 +31,7 @@ jobs:
           build_dir: doc/api
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # Build APKs
+          
   build_apks:
     name: Build APKs
     runs-on: ubuntu-latest
@@ -58,15 +57,12 @@ jobs:
       - name: Building APKs (Split by ABI)
         run: flutter build apk --release --split-per-abi
  
-      - name: Release the APKs
-        uses: ncipollo/release-action@v1
+      - name: Upload artifacts
+        uses: actions/upload-artifact@master
         with:
-          artifacts: "build/app/outputs/flutter-apk/*.apk"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag: v${{ steps.project_version.outputs.version_number }}-${{github.run_number}}-apks
-          name: "Built Apks ${{ steps.project_version.outputs.version_number }} Build(${{github.run_number}})"
+          name: publish-artifacts
+          path: build/app/outputs/flutter-apk/*.apk
 
-  # Build Appbundle
   build_appbundle:
     name: Build APPBUNDLE
     runs-on: ubuntu-latest
@@ -92,10 +88,40 @@ jobs:
       - name: Building Appbundle
         run: flutter build appbundle
 
-      - name: Release Appbundle
+      - name: Upload artifacts
+        uses: actions/upload-artifact@master
+        with:
+          name: publish-artifacts
+          path: build/app/outputs/bundle/release/*.aab
+
+  publish:
+    name: Publish the binaries
+    needs: [build_apks, build_appbundle]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2 
+
+      - name: Get project version
+        id: project_version
+        uses: its404/get-flutter-version@v1.0.0
+        
+      - name: Download apks
+        uses: actions/download-artifact@v2
+        with:
+          name: publish-artifacts
+          path: build/app/outputs/flutter-apk
+
+      - name: Download appbundle
+        uses: actions/download-artifact@v2
+        with:
+          name: publish-artifacts
+          path: build/app/outputs/bundle/prodRelease
+
+      - name: Release Binary
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/app/outputs/bundle/release/*.aab"
+          artifacts: "build/app/outputs/bundle/release/*.aab, build/app/outputs/flutter-apk/*.apk"
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: v${{ steps.project_version.outputs.version_number }}-${{github.run_number}}-appbundle
-          name: "Built Appbundle ${{ steps.project_version.outputs.version_number }} Build(${{github.run_number}})"
+          tag: v${{ steps.project_version.outputs.version_number }}+${{steps.project_version.outputs.build_number}}-${{github.run_number}}
+          name: "Release ${{ steps.project_version.outputs.version_number }}+${{steps.project_version.outputs.build_number}}"
+          generateReleaseNotes: true
