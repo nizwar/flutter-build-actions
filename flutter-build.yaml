@@ -2,101 +2,59 @@ name: Build Flutter APKs & Appbundle
 on: push
 
 jobs:
-  build_documentation: 
-    name: Build Documentation
+  build:
+    name: Build Flutter Artifacts
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [documentation, apks, appbundle]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install Flutter SDK
-        uses: subosito/flutter-action@v1
+      - name: Set up JDK 21
+        if: matrix.target != 'documentation'
+        uses: actions/setup-java@v2
         with:
-          channel: 'stable'     
+          distribution: 'adopt'
+          java-version: '21.x'
+
+      - name: Install Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
 
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Install dartdoc
-        run: flutter pub global activate dartdoc
+      - name: Build Documentation
+        if: matrix.target == 'documentation'
+        run: |
+          flutter pub global activate dartdoc
+          flutter pub global run dartdoc
 
-      - name: Generate documentation
-        run: flutter pub global run dartdoc
-
-      - name: Release the documentation
-        uses: crazy-max/ghaction-github-pages@v3
-        if: success()
-        with:
-          target_branch: documentation
-          build_dir: doc/api
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-  build_apks:
-    name: Build APKs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up JDK 12
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'adopt'
-          java-version: '12.x'
-
-      - name: Initialize project version
-        id: project_version
-        uses: its404/get-flutter-version@v1.0.0
-
-      - name: Install Flutter SDK
-        uses: subosito/flutter-action@v1
-        with:
-          channel: 'stable'     
-
-      - name: Building APKs (Split by ABI)
+      - name: Build APKs (Split by ABI)
+        if: matrix.target == 'apks'
         run: flutter build apk --release --split-per-abi
- 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@master
-        with:
-          name: publish-artifacts
-          path: build/app/outputs/flutter-apk/*.apk
 
-  build_appbundle:
-    name: Build APPBUNDLE
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up JDK 12
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'adopt'
-          java-version: '12.x'
-
-      - name: Get project version
-        id: project_version
-        uses: its404/get-flutter-version@v1.0.0
-
-      - name: Install Flutter
-        uses: subosito/flutter-action@v1
-        with:
-          channel: 'stable'    
-
-      - name: Building Appbundle
+      - name: Build Appbundle
+        if: matrix.target == 'appbundle'
         run: flutter build appbundle
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@master
+        if: matrix.target == 'apks' || matrix.target == 'appbundle'
+        uses: actions/upload-artifact@v4
         with:
-          name: publish-artifacts
-          path: build/app/outputs/bundle/release/*.aab
+          name: publish-artifacts-${{ matrix.target }}
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            build/app/outputs/bundle/release/*.aab
+          if-no-files-found: ignore
+          overwrite: true
 
   publish:
     name: Publish the binaries
-    needs: [build_apks, build_appbundle]
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2 
@@ -106,16 +64,16 @@ jobs:
         uses: its404/get-flutter-version@v1.0.0
         
       - name: Download apks
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
-          name: publish-artifacts
+          name: publish-artifacts-apks
           path: build/app/outputs/flutter-apk
 
       - name: Download appbundle
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
-          name: publish-artifacts
-          path: build/app/outputs/bundle/prodRelease
+          name: publish-artifacts-appbundle
+          path: build/app/outputs/bundle/release
 
       - name: Release Binary
         uses: ncipollo/release-action@v1
