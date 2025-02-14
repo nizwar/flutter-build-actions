@@ -2,7 +2,9 @@
 Automate your Flutter build process with GitHub Actions.
 
 Simply run this command in your project root directory to add the workflow file:
-`git clone https://github.com/nizwar/flutter-build-actions.git .github/workflows && rm -rf .github/workflows/.git`
+```bash
+git clone https://github.com/nizwar/flutter-build-actions.git .github/workflows && rm -rf .github/workflows/.git
+```
 
 or Follow the steps below to add the workflow file manually.
 ## Usage
