@@ -67,11 +67,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: publish-artifacts-apks 
+          path: build/app/outputs/flutter-apk/
 
       - name: Download appbundle
         uses: actions/download-artifact@v4
         with:
           name: publish-artifacts-appbundle 
+          path: build/app/outputs/bundle/release/
 
       - name: Display structure of downloaded apks
         run: ls -R build/app/outputs/flutter-apk
@@ -82,7 +84,7 @@ jobs:
       - name: Release Binary
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/app/outputs/flutter-apk/*.apk,build/app/outputs/bundle/release/*.aab"
+          artifacts: "build/app/outputs/flutter-apk/flutter-apk/*.apk,build/app/outputs/bundle/release/bundle/release/*.aab"
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: v${{ steps.project_version.outputs.version_number }}+${{steps.project_version.outputs.build_number}}-${{github.run_number}}
           name: "Release ${{ steps.project_version.outputs.version_number }}+${{steps.project_version.outputs.build_number}}"
